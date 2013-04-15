@@ -7,6 +7,20 @@
  0 1 5 0
  1 0 -17 0
  0 0 0 -2
+  *Main> let matA = [[3,4,1],[-4,3,0],[2,7,-6%7]] :: Matrix
+  *Main> let matB = [[91],[-2%9],[5]] :: Matrix
+  *Main> putStr $ showAugMatrix (matA,matB)
+      3     4     1 |    91
+     -4     3     0 |  -2/9
+      2     7  -6/7 |     5
+  *Main> putStr $ showMatrix matA
+      3     4     1
+     -4     3     0
+      2     7  -6/7
+  *Main> putStr $ showMatrix matB
+     91
+   -2/9
+      5
  -}
 
 import Data.Ratio ((%))
@@ -15,6 +29,7 @@ import GHC.Real -- :%
 type Val = Ratio Integer
 type Row = [Val]
 type Matrix = [Row]
+type AugMatrix = (Matrix, Matrix)
 
 -- eliminates the second Row using the leading coefficient in the first Row
 eliminate :: Row -> Row -> Row
@@ -42,13 +57,27 @@ showVal :: Val -> String
 showVal (x:%1) = show x
 showVal (x:%y) = show x ++ "/" ++ show y
 
+-- pads a string with spaces at the beginning
+-- to be at least as long as n
+padStr :: Int -> String -> String
+padStr n s
+  | len < n   = replicate (n-len) ' ' ++ s
+  | otherwise = s
+  where len = length s
+
 -- convert a Row into a String
 showRow :: Row -> String
-showRow = unwords . (map showVal)
+showRow = unwords . (map ((padStr 5) . showVal))
 
 -- convert a Matrix into a String
 showMatrix :: Matrix -> String
 showMatrix = unlines . (map showRow)
+
+-- convert an AugMatrix into a String
+showAugMatrix :: AugMatrix -> String
+showAugMatrix ([],[]) = []
+showAugMatrix (lrow:lrows, rrow:rrows) = showRow lrow ++ " | " ++ showRow rrow ++ "\n" ++
+                                         showAugMatrix (lrows,rrows)
 
 -- determines whether the given Matrix is rectangular and non-empty
 sane :: Matrix -> Bool
