@@ -13,7 +13,6 @@ internal
   recognize no solution, infinite solutions, unique solution
     no solution has contradiction
     infinite solution has more variables than equations
-      be sure to prune any zero rows; they would cause false positives
     unique solution has identity matrix on left
       or just default case if not either of the others
   add variable names to internal representation?

@@ -9,10 +9,13 @@
     0     0     1 |    -1
 -}
 
+{---- IMPORTS ----} --{{{
 import Data.Ratio ((%))
 import Data.List (findIndex, sortBy)
 import Data.Function (on)
 import GHC.Real -- :% -- TODO: why can't I import just this constructor?
+--}}}
+
 
 {---- TYPE SYNONYMS ----} --{{{
 type Val = Ratio Integer
@@ -36,7 +39,10 @@ mat4 = [([0,2,9],[1,0,0]),([1,0,-3],[0,1,0]),([0,1,5],[0,0,1])] :: AugMatrix
 mat5 = [([0,2,9],[7]),([1,0,-3],[8])] :: AugMatrix
 -- infinite solutions, redundant row
 mat6 = [([0,2,9],[7]),([1,0,-3],[8]),([0,2,9],[7])] :: AugMatrix
+-- contradiction and rows of zero
+mat7 = [([0,2,9],[7]),([0,0,0],[0]),([1,0,-3],[8]),([0,0,0],[9]),([0,1,5],[-2]),([0,0,0],[0])] :: AugMatrix
 --}}}
+
 
 {---- PRINTING ----} --{{{
 
@@ -74,7 +80,6 @@ showAugMatrix = unlines . (map showAugRow)
 
 
 {---- CONVENIENCE FUNCTIONS ----} --{{{
-
 -- maps a function on the left and right sides of an augmented row
 mapAug :: (Row -> Row) -> AugRow -> AugRow
 mapAug f (lr, rr) = (f lr, f rr)
@@ -136,16 +141,8 @@ rref m
 -- wrapper function for reallyAugRref, which checks for sanity
 rrefAug :: AugMatrix -> AugMatrix
 rrefAug am
-  | saneAug am = sortAugMatrix $ reallyRrefAug [] am
+  | saneAug am = sortAugMatrix . pruneZeros $ reallyRrefAug [] am
   | otherwise  = error "rrefAug: input matrix is not rectangular or is empty"
-
--- helper function to print what rref does to a Matrix
-doRref :: Matrix -> IO ()
-doRref = putStr . showMatrix . rref
-
--- helper function to print what rrefAug does to an AugMatrix
-doRrefAug :: AugMatrix -> IO ()
-doRrefAug = putStr . showAugMatrix . rrefAug
 
 -- sort the rows of an AugMatrix by the column of the leading coefficients
 sortAugMatrix :: AugMatrix -> AugMatrix
@@ -156,11 +153,23 @@ sortAugMatrix = sortBy (compare `on` firstNonZeroIndex)
                         -- just choose the length if no nonzero elements,
                         -- so rows of zero go on the bottom
                         Nothing -> length lr
+
+-- prunes rows of all zeros
+pruneZeros :: AugMatrix -> AugMatrix
+pruneZeros = filter (notAllZeros)
+  where notAllZeros (lr, rr) = not $ all (==0) (lr ++ rr)
+
+-- helper function to print what rref does to a Matrix
+doRref :: Matrix -> IO ()
+doRref = putStr . showMatrix . rref
+
+-- helper function to print what rrefAug does to an AugMatrix
+doRrefAug :: AugMatrix -> IO ()
+doRrefAug = putStr . showAugMatrix . rrefAug
 --}}}
 
 
 {---- DO THE REAL WORK ----} --{{{
-
 -- actually perform row reduction on a Matrix.
 -- the first argument is the list of completed rows, which accumulates
 -- as it calls itself recursively
@@ -168,7 +177,7 @@ reallyRref :: Matrix -> Matrix -> Matrix
 reallyRref done []     = done
 reallyRref done (r:rs) = reallyRref (elim done ++ [leadingOne r]) (elim rs)
   where
-    elim          = map (eliminate (leadingOne r))
+    elim = map (eliminate (leadingOne r))
 
 -- actually perform row reduction on an AugMatrix.
 -- the first argument is the list of completed rows, which accumulates
@@ -177,5 +186,5 @@ reallyRrefAug :: AugMatrix -> AugMatrix -> AugMatrix
 reallyRrefAug done []       = done
 reallyRrefAug done (ar:ars) = reallyRrefAug (elim done ++ [leadingOneAug ar]) (elim ars)
   where
-    elim          = map (eliminateAug (leadingOneAug ar))
+    elim = map (eliminateAug (leadingOneAug ar))
 --}}}
