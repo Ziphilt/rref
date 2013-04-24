@@ -8,8 +8,6 @@ output
 internal
   sort rows by column of leading coefficient
     use sortBy
-  make augmented matrices work
-    list of pairs of rows, not pair of lists of rows
   recognize no solution, infinite solutions, unique solution
     no solution has contradiction
     infinite solution has more variables than equations
