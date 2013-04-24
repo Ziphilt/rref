@@ -40,7 +40,11 @@ mat5 = [([0,2,9],[7]),([1,0,-3],[8])] :: AugMatrix
 -- infinite solutions, redundant row
 mat6 = [([0,2,9],[7]),([1,0,-3],[8]),([0,2,9],[7])] :: AugMatrix
 -- contradiction and rows of zero
-mat7 = [([0,2,9],[7]),([0,0,0],[0]),([1,0,-3],[8]),([0,0,0],[9]),([0,1,5],[-2]),([0,0,0],[0])] :: AugMatrix
+mat7 = [([0,2,9],[7]),([0,0,0],[0]),([1,0,-3],[8]),([0,1,5],[-2]),([0,0,0],[0])] :: AugMatrix
+-- contradiction
+mat8 = [([0,2,9],[7]),([0,0,0],[9]),([1,0,-3],[8]),([0,1,5],[-2])] :: AugMatrix
+-- infinite solutions, zero row
+mat9 = [([0,2,9],[7]),([1,0,-3],[8]),([0,0,0],[0])] :: AugMatrix
 --}}}
 
 
@@ -138,7 +142,8 @@ rref m
   | sane m    = reallyRref [] m
   | otherwise = error "rref: input matrix is not rectangular or is empty"
 
--- wrapper function for reallyAugRref, which checks for sanity
+-- wrapper function for reallyAugRref, which checks for sanity,
+-- prunes rows of zeros, and sorts by leading coefficients
 rrefAug :: AugMatrix -> AugMatrix
 rrefAug am
   | saneAug am = sortAugMatrix . pruneZeros $ reallyRrefAug [] am
@@ -166,6 +171,20 @@ doRref = putStr . showMatrix . rref
 -- helper function to print what rrefAug does to an AugMatrix
 doRrefAug :: AugMatrix -> IO ()
 doRrefAug = putStr . showAugMatrix . rrefAug
+
+-- determines if a system has a contradiction
+-- there is one if there is a row with all zeros on the left and any nonzero on the right
+hasContradiction :: AugMatrix -> Bool
+hasContradiction = any (contradiction)
+  where contradiction (lr, rr) = all (==0) lr && any (/=0) rr
+
+-- determines if a system has infinite solutions
+-- assumes the system is already rref'd, has had rows of zero pruned,
+-- and does not have contradictions
+-- there are infinite solutions if the number of variables is greater than the number of equations
+hasInfiniteSolutions :: AugMatrix -> Bool
+hasInfiniteSolutions []           = False -- empty system does not have infinite solutions
+hasInfiniteSolutions m@((lr,_):_) = length lr > length m
 --}}}
 
 
