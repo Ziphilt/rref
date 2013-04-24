@@ -23,6 +23,21 @@ type AugMatrix = [AugRow]
 --}}}
 
 
+{---- TESTING ----} --{{{
+-- unique solution
+mat1 = [([0,2,9],[7]),([1,0,-3],[8]),([0,1,5],[-2])] :: AugMatrix
+-- no solution
+mat2 = [([1,-5,4],[-3]),([2,-7,3],[-2]),([-2,1,7],[-1])] :: AugMatrix
+-- unique solution, redundant but consistent
+mat3 = [([0,2,9],[7]),([1,0,-3],[8]),([0,1,5],[-2]),([1,0,-3],[8])] :: AugMatrix
+-- compute the inverse
+mat4 = [([0,2,9],[1,0,0]),([1,0,-3],[0,1,0]),([0,1,5],[0,0,1])] :: AugMatrix
+-- infinite solutions
+mat5 = [([0,2,9],[7]),([1,0,-3],[8])] :: AugMatrix
+-- infinite solutions, redundant row
+mat6 = [([0,2,9],[7]),([1,0,-3],[8]),([0,2,9],[7])] :: AugMatrix
+--}}}
+
 {---- PRINTING ----} --{{{
 
 -- pads a string with spaces at the beginning
