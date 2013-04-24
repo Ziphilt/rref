@@ -10,7 +10,8 @@
 -}
 
 import Data.Ratio ((%))
-import Data.List (findIndex)
+import Data.List (findIndex, sortBy)
+import Data.Function (on)
 import GHC.Real -- :% -- TODO: why can't I import just this constructor?
 
 {---- TYPE SYNONYMS ----} --{{{
@@ -120,7 +121,7 @@ rref m
 -- wrapper function for reallyAugRref, which checks for sanity
 rrefAug :: AugMatrix -> AugMatrix
 rrefAug am
-  | saneAug am = reallyRrefAug [] am
+  | saneAug am = sortAugMatrix $ reallyRrefAug [] am
   | otherwise  = error "rrefAug: input matrix is not rectangular or is empty"
 
 -- helper function to print what rref does to a Matrix
@@ -130,6 +131,16 @@ doRref = putStr . showMatrix . rref
 -- helper function to print what rrefAug does to an AugMatrix
 doRrefAug :: AugMatrix -> IO ()
 doRrefAug = putStr . showAugMatrix . rrefAug
+
+-- sort the rows of an AugMatrix by the column of the leading coefficients
+sortAugMatrix :: AugMatrix -> AugMatrix
+sortAugMatrix = sortBy (compare `on` firstNonZeroIndex)
+  where
+    firstNonZeroIndex (lr, _) = case findIndex (/=0) lr of
+                        Just i  -> i
+                        -- just choose the length if no nonzero elements,
+                        -- so rows of zero go on the bottom
+                        Nothing -> length lr
 --}}}
 
 

@@ -1,16 +1,19 @@
 input
   some format other than native Haskell
   use Parsec to parse?
+  take variable names?
 
 output
   pretty print answer
+    make padding amount based on sizes, not hardcoded
+      ideally, per-column
+      better than nothing: based on whole matrix
 
 internal
-  sort rows by column of leading coefficient
-    use sortBy
   recognize no solution, infinite solutions, unique solution
     no solution has contradiction
     infinite solution has more variables than equations
+      be sure to prune any zero rows; they would cause false positives
     unique solution has identity matrix on left
-  implement map on AugRow
+      or just default case if not either of the others
   add variable names to internal representation?
