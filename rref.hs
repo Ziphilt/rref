@@ -21,21 +21,67 @@
      91
    -2/9
       5
- -}
+-}
 
 import Data.Ratio ((%))
 import Data.List (findIndex)
-import GHC.Real -- :%
+import GHC.Real -- :% -- TODO: why can't I import just this constructor?
+
+{---- TYPE SYNONYMS ----} --{{{
 type Val = Ratio Integer
 type Row = [Val]
 type Matrix = [Row]
-type AugMatrix = (Matrix, Matrix)
+type AugRow = (Row, Row)
+type AugMatrix = [AugRow]
+--}}}
+
+
+{---- PRINTING ----} --{{{
+
+-- pads a string with spaces at the beginning
+-- to be at least as long as n
+padStr :: Int -> String -> String
+padStr n s
+  | len < n   = replicate (n-len) ' ' ++ s
+  | otherwise = s
+  where len = length s
+
+-- convert a Val into a String for pretty-printing
+-- only shows a denominator if it is not one
+showVal :: Val -> String
+showVal (x:%1) = show x
+showVal (x:%y) = show x ++ "/" ++ show y
+
+-- convert a Row into a String
+-- also pads each Val to five characters for pretty printing
+showRow :: Row -> String
+showRow = unwords . (map ((padStr 5) . showVal))
+
+-- convert a Matrix into a String
+showMatrix :: Matrix -> String
+showMatrix = unlines . (map showRow)
+
+{-
+-- convert an AugMatrix into a String
+showAugMatrix :: AugMatrix -> String
+showAugMatrix ([],[]) = []
+showAugMatrix (lrow:lrows, rrow:rrows) = showRow lrow ++ " | " ++ showRow rrow ++ "\n" ++
+                                         showAugMatrix (lrows,rrows)
+-}
+--}}}
+
+
+{---- CONVENIENCE FUNCTIONS ----} --{{{
+
+-- maps a function on the left and right sides of an augmented row
+augMap :: (Row -> Row) -> AugRow -> AugRow
+augMap f (lrow, rrow) = (f lrow, f rrow)
 
 -- eliminates the second Row using the leading coefficient in the first Row
 eliminate :: Row -> Row -> Row
 eliminate r1 r2 = zipWith (+) (map (*x) r1) r2
   where
-    x = -(r2!!i1)/x1 -- the value to pivot with
+    x        = -(r2!!i1)/x1 -- the value to pivot with
     (i1, x1) = firstNonZeroIndex r1 -- find the first nonzero element of r1, or zero otherwise
     firstNonZeroIndex r = case findIndex (/=0) r of
                         Just i  -> (i, r!!i)
@@ -52,33 +98,6 @@ firstNonZero r = case filter (/=0) r of
                (x:xs) -> x
                _      -> 1
 
--- convert a Val into a String for pretty-printing
-showVal :: Val -> String
-showVal (x:%1) = show x
-showVal (x:%y) = show x ++ "/" ++ show y
-
--- pads a string with spaces at the beginning
--- to be at least as long as n
-padStr :: Int -> String -> String
-padStr n s
-  | len < n   = replicate (n-len) ' ' ++ s
-  | otherwise = s
-  where len = length s
-
--- convert a Row into a String
-showRow :: Row -> String
-showRow = unwords . (map ((padStr 5) . showVal))
-
--- convert a Matrix into a String
-showMatrix :: Matrix -> String
-showMatrix = unlines . (map showRow)
-
--- convert an AugMatrix into a String
-showAugMatrix :: AugMatrix -> String
-showAugMatrix ([],[]) = []
-showAugMatrix (lrow:lrows, rrow:rrows) = showRow lrow ++ " | " ++ showRow rrow ++ "\n" ++
-                                         showAugMatrix (lrows,rrows)
-
 -- determines whether the given Matrix is rectangular and non-empty
 sane :: Matrix -> Bool
 sane (r:rs) = all (\row -> (length row)==(length r)) rs && length r /= 0
@@ -88,6 +107,14 @@ rref :: Matrix -> Matrix
 rref m
   | sane m    = reallyRref [] m
   | otherwise = error "rref: input matrix is not rectangular or is empty"
+
+-- helper function to print what rref does to a matrix
+doRref :: Matrix -> IO ()
+doRref = putStr . showMatrix . rref
+--}}}
+
+
+{---- DO THE REAL WORK ----} --{{{
 
 -- actually perform row reduction on a Matrix.
 -- the first argument is the list of completed rows, which accumulates
@@ -100,6 +127,23 @@ reallyRref done (r:rs) = reallyRref (elim done ++ [leadingOne r]) (elim rs)
     --((r:nzr), zr) = partition (\row -> (head row)/=0) rest
     --rs            = nzr ++ zr
 
--- helper function to print what rref does to a matrix
-doRref :: Matrix -> IO ()
-doRref = putStr . showMatrix . rref
+{-
+-- wrapper function for reallyRrefAug, which checks for sanity
+rrefAug :: AugMatrix -> AugMatrix
+rrefAug (matA, matB)
+  | sane matA && sane matB && (length matA == length matB) = reallyRrefAug [] (matA, matB)
+  | otherwise = error "rref: input matrix is not rectangular or is empty"
+
+-- actually perform row reduction on an AugMatrix.
+-- the first argument is the list of completed rows, which accumulates
+-- as it calls itself recursively
+reallyRrefAug :: AugMatrix -> AugMatrix -> AugMatrix
+reallyRrefAug done []                       = done
+reallyRrefAug (ldone, rdone) (lrow:lrows, rrow:rrows) = reallyRrefAug (elimAugMat done ++ [leadingOne lrow]) (elim rs)
+  where
+    elim = map (eliminate (leadingOne lrow))
+    --elimAugMat (lmat, rmat) = (elim lmat, elim rmat)
+    --((r:nzr), zr) = partition (\row -> (head row)/=0) rest
+    --rs            = nzr ++ zr
+    -}
+--}}}
