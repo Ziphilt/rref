@@ -11,7 +11,7 @@
 
 {---- IMPORTS ----} --{{{
 import Data.Ratio ((%))
-import Data.List (findIndex, sortBy)
+import Data.List (findIndex, sortBy, (\\))
 import Data.Function (on)
 import GHC.Real -- :% -- TODO: why can't I import just this constructor?
 --}}}
@@ -45,6 +45,8 @@ mat7 = [([0,2,9],[7]),([0,0,0],[0]),([1,0,-3],[8]),([0,1,5],[-2]),([0,0,0],[0])]
 mat8 = [([0,2,9],[7]),([0,0,0],[9]),([1,0,-3],[8]),([0,1,5],[-2])] :: AugMatrix
 -- infinite solutions, zero row
 mat9 = [([0,2,9],[7]),([1,0,-3],[8]),([0,0,0],[0])] :: AugMatrix
+-- already rref'd, x2, x4 arbitrary
+mat10 = [([1,0,1,0,5],[2]),([0,1,3,0,6],[4]),([0,0,0,1,7],[8])] :: AugMatrix
 --}}}
 
 
@@ -153,7 +155,7 @@ rrefAug am
 sortAugMatrix :: AugMatrix -> AugMatrix
 sortAugMatrix = sortBy (compare `on` firstNonZeroIndex)
   where
-    firstNonZeroIndex (lr, _) = case findIndex (/=0) lr of
+    firstNonZeroIndex (lr,_) = case findIndex (/=0) lr of
                         Just i  -> i
                         -- just choose the length if no nonzero elements,
                         -- so rows of zero go on the bottom
@@ -185,6 +187,34 @@ hasContradiction = any (contradiction)
 hasInfiniteSolutions :: AugMatrix -> Bool
 hasInfiniteSolutions []           = False -- empty system does not have infinite solutions
 hasInfiniteSolutions m@((lr,_):_) = length lr > length m
+
+-- turns a system into a description of what each variable equals
+-- assumes the input system is consistent
+showEquations :: AugMatrix -> String
+showEquations m = unlines (map (showEq) m ++ findArb m)
+  where
+    showArb n            = "x" ++ show n ++ " arbitrary"
+    findArb m@((lr,_):_) = map (showArb) ([0..(length lr - 1)] \\ map (leadingCoef) m)
+      where
+        leadingCoef (l,_) = case findIndex (/=0) l of
+                             Just i  -> i
+                             Nothing -> length l
+    showEq (lr, (r1:_))  = "x" ++ show leadingVar ++ " = " ++ showVal r1 ++ (concat $ map (showVar lr) indices)
+      where
+        indices     = [(leadingVar+1)..(length lr)-1]
+        showVar r n = if (r!!n == 0) then "" else " + " ++ (("("++) . (++")") . showVal) (-(r!!n)) ++ "*x"++ show n
+        leadingVar  = case findIndex (/=0) lr of
+                      Just i  -> i
+                      Nothing -> error "showEquations: there isn't supposed to be a zero row here"
+{-
+x0 =    3*x2 +   8
+x1 = -9/2*x2 + 7/2
+x2 arbitrary
+
+|x0|      |   3|   |  8|
+|x1| = x2*|-9/2| + |7/2|
+|x2|      |   1|   |  0|
+-}
 --}}}
 
 
