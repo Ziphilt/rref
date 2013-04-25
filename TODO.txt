@@ -1,6 +1,4 @@
 input
-  some format other than native Haskell
-  use Parsec to parse?
   take variable names?
 
 output
@@ -9,5 +7,5 @@ output
       better than nothing: based on whole matrix
 
 internal
-  actual main function
+  comments, documentation, code cleanup
   add variable names to internal representation?

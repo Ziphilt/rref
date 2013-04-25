@@ -10,6 +10,8 @@
 -}
 
 {---- IMPORTS ----} --{{{
+import System.Console.Readline
+import Text.ParserCombinators.Parsec
 import Data.Ratio ((%))
 import Data.List (findIndex, sortBy, (\\))
 import Data.Function (on)
@@ -215,6 +217,8 @@ x2 arbitrary
 |x1| = x2*|-9/2| + |7/2|
 |x2|      |   1|   |  0|
 -}
+
+-- bundles all the interpretation functions together
 interpretSystem :: AugMatrix -> String
 interpretSystem m = (showAugMatrix reduced) ++ "\n" ++ 
                     if (hasContradiction reduced) then "no solution!\n"
@@ -226,7 +230,65 @@ interpretSystem m = (showAugMatrix reduced) ++ "\n" ++
 --}}}
 
 
+{---- PARSING ----} --{{{
+whitespace :: Parser ()
+whitespace = skipMany (char ' ')
+
+number :: Parser Integer
+number = (do char '-'
+             ds <- many1 digit
+             return (-(read ds))
+          ) <|>
+          (do ds <- many1 digit
+              return (read ds)
+           )
+
+val :: Parser Val
+val = do a <- number
+         (do char '/'
+             b <- number
+             return (a%b)
+          ) <|>
+          (do return (a%1)
+           )
+
+row :: Parser Row
+row = sepEndBy1 val whitespace
+
+augRow :: Parser AugRow
+augRow = do lr <- row
+            --whitespace
+            char '|'
+            whitespace
+            rr <- row
+            return (lr, rr)
+
+matrix :: Parser AugMatrix
+matrix = sepEndBy1 augRow newline
+--}}}
+
+
 {---- DO THE REAL WORK ----} --{{{
+main = do
+  putStrLn "Input rows, and an empty line when finished."
+  putStrLn "Separate values by spaces,"
+  putStrLn "and the coefficients from the constants by vertical lines."
+  putStrLn "Ex: 0 1 -2/3 4 5/-7 | 9"
+  input <- readUntilEmptyLine
+  case parse matrix "" input of
+    Left err  -> print err
+    Right mat -> putStr $ interpretSystem mat
+ 
+readUntilEmptyLine :: IO String
+readUntilEmptyLine = do
+  line <- readline "> "
+  case line of
+    Nothing    -> return ""
+    Just ""    -> return ""
+    Just line1 -> (do
+                  line2 <- readUntilEmptyLine
+                  return (line1 ++ "\n" ++ line2))
+
 -- actually perform row reduction on a Matrix.
 -- the first argument is the list of completed rows, which accumulates
 -- as it calls itself recursively
