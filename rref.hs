@@ -39,7 +39,7 @@ mat4 = [([0,2,9],[1,0,0]),([1,0,-3],[0,1,0]),([0,1,5],[0,0,1])] :: AugMatrix
 mat5 = [([0,2,9],[7]),([1,0,-3],[8])] :: AugMatrix
 -- infinite solutions, redundant row
 mat6 = [([0,2,9],[7]),([1,0,-3],[8]),([0,2,9],[7])] :: AugMatrix
--- contradiction and rows of zero
+-- unique solution and rows of zero
 mat7 = [([0,2,9],[7]),([0,0,0],[0]),([1,0,-3],[8]),([0,1,5],[-2]),([0,0,0],[0])] :: AugMatrix
 -- contradiction
 mat8 = [([0,2,9],[7]),([0,0,0],[9]),([1,0,-3],[8]),([0,1,5],[-2])] :: AugMatrix
@@ -215,6 +215,14 @@ x2 arbitrary
 |x1| = x2*|-9/2| + |7/2|
 |x2|      |   1|   |  0|
 -}
+interpretSystem :: AugMatrix -> String
+interpretSystem m = (showAugMatrix reduced) ++ "\n" ++ 
+                    if (hasContradiction reduced) then "no solution!\n"
+                      else (if (hasInfiniteSolutions reduced) then "infinite solutions:\n"
+                        else "unique solution:\n")
+                        ++ showEquations reduced
+  where
+    reduced = rrefAug m
 --}}}
 
 

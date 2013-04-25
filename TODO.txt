@@ -4,13 +4,10 @@ input
   take variable names?
 
 output
-  pretty print answer
     make padding amount based on sizes, not hardcoded
       ideally, per-column
       better than nothing: based on whole matrix
 
 internal
-  recognize no solution, infinite solutions, unique solution
-    unique solution has identity matrix on left
-      or just default case if not either of the others
+  actual main function
   add variable names to internal representation?
