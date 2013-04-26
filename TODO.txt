@@ -1,5 +1,4 @@
 input
-  take variable names?
 
 output
     make padding amount based on sizes, not hardcoded
@@ -8,4 +7,5 @@ output
 
 internal
   comments, documentation, code cleanup
-  add variable names to internal representation?
+
+report
